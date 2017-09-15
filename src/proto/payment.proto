@@ -1,0 +1,29 @@
+syntax = "proto3";
+//this belongs to this microservice
+package payment;
+
+
+//Methods exposed to client
+service PaymentService {
+  rpc get (Empty) returns (GetReply){}
+  rpc connect (Code) returns (GetReply){}
+  rpc createPayment (PaymentRequest) returns (Empty){}
+}
+
+message Empty {
+}
+
+message Code {
+  string code = 1;
+}
+
+
+message GetReply{
+  string access = 1;
+}
+
+message PaymentRequest {
+  double subtotal = 1;
+  string currency = 2;
+  string premises = 3;
+}

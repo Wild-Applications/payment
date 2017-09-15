@@ -1,0 +1,49 @@
+syntax = "proto3";
+//this belongs to this microservice
+package premises;
+
+//Methods exposed to client
+service PremisesService {
+  rpc get (Empty) returns (GetReply){}
+  rpc create (CreateRequest) returns (CreateReply){}
+  rpc update ( UpdateRequest ) returns (CreateReply){}
+  rpc delete ( DeleteRequest ) returns (Empty){}
+  rpc getOwner (PremisesId) returns (OwnerId){}
+}
+
+message Empty {
+}
+
+message GetReply {
+  string _id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message CreateRequest {
+  string name = 1;
+  optional string description = 2 [default = ""];
+  int32 owner = 3;
+}
+
+message CreateReply {
+  string _id = 1;
+}
+
+message UpdateRequest {
+  string _id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message DeleteRequest{
+  string _id = 1;
+}
+
+message PremisesId{
+  string premisesId = 1;
+}
+
+message OwnerId {
+   int32 ownerId = 1;
+}

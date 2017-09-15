@@ -1,0 +1,19 @@
+{
+  "name": "payment",
+  "version": "0.0.1",
+  "description": "Pyament microservice",
+  "main": "./src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/app.js"
+  },
+  "author": "Michael Wild - Wild Applications",
+  "license": "ISC",
+  "dependencies": {
+    "grpc": "^1.4.1",
+    "jsonwebtoken": "^7.4.2",
+    "mongoose": "^4.11.7",
+    "request": "^2.81.0",
+    "stripe": "^5.0.0"
+  }
+}

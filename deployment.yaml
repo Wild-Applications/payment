@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: payment
+  labels:
+   name: payment
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jwt-secret
+  namespace: payment
+type: Opaque
+stringData:
+  secret: KO/9ASG/XcOq0QEpxE2/VwDlCYVkBt4Si0ILMb4UYXzm9l+KZ0aJdGf0LZ0OtvPp41KrMuASJmI5mo6XUbkX1FmswAqQRdOvzv1vgugN4kiTPK/zUgRwn8ZZj0qiDG4skP52DyeYJw/bEJQi4NBP2sLxQAJnSjnErVsaQ4a7a8QywidUmzWcEAg3exMPnsyqticoPh/9VQCJZ4W0fS3Lxs7VcmYRb8rsc9Hm84iaoDU4pqDofpNaOUEBQ3DYZA9DZED8eHtmiH6e9LZn9UV59A9SoABXVtpMrjzKLUqgK/11lDcB+ahjY7XVg6zUERalfj095LBVMaH4gycH2MMgEg==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: client-id
+  namespace: payment
+type: Opaque
+stringData:
+  secret: ca_BNy5AOnoJYsR3lfXeO6mmIqVMIy4D469
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: stripe-secret
+  namespace: payment
+type: Opaque
+stringData:
+  secret: sk_test_ycEulZsfh373quNPSqFAmD4X
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: deployment
+  namespace: payment
+  labels:
+    app: payment
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+      - name: payment
+        image: wildapps/payment:0.0.1
+        ports:
+        - containerPort: 50051
+        env:
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secret
+        - name: CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: client-id
+              key: secret
+        - name: STRIPE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: stripe-secret
+              key: secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service
+  namespace: payment
+  labels:
+    app: payment
+spec:
+  type: ClusterIP
+  ports:
+  - port: 1295
+    targetPort: 50051
+  selector:
+    app: payment
+  externalName: payment
