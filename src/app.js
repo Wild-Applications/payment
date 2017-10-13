@@ -19,11 +19,13 @@ mongoose.connection.on('connected', function () {
 // If the connection throws an error
 mongoose.connection.on('error',function (err) {
   console.log('Mongoose default connection error: ' + err);
+  process.exit(0);
 });
 
 // When the connection is disconnected
 mongoose.connection.on('disconnected', function () {
   console.log('Mongoose default connection disconnected');
+  process.exit(0);
 });
 
 // If the Node process ends, close the Mongoose connection
@@ -45,6 +47,15 @@ server.addService(proto.payment.PaymentService.service, {
   },
   createPayment: function(call, callback){
     paymentHelper.createPayment(call, callback);
+  },
+  getStoredPaymentMethods: function(call, callback){
+    paymentHelper.getStoredPaymentMethods(call, callback);
+  },
+  capturePayment: function(call, callback){
+    paymentHelper.capturePayment(call, callback);
+  },
+  refundPayment: function(call, callback){
+    paymentHelper.refundPayment(call, callback);
   }
 });
 

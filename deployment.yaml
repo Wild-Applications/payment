@@ -40,7 +40,7 @@ metadata:
   labels:
     app: payment
 spec:
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
@@ -48,7 +48,8 @@ spec:
     spec:
       containers:
       - name: payment
-        image: wildapps/payment:0.0.1
+        image: wildapplications/payment:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 50051
         env:

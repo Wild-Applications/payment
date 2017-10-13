@@ -1,7 +1,9 @@
 
 //imports
 var jwt = require('jsonwebtoken'),
-Payment = require('../models/payment.schema.js')
+Premises = require('../models/premises.schema.js'),
+Customer = require('../models/customer.schema.js'),
+Payment = require('../models/payment.schema.js'),
 request = require('request');
 
 
@@ -10,6 +12,9 @@ const clientId = process.env.CLIENT_ID;
 
 var stripe = require('stripe')(secretKey);
 
+var grpc = require("grpc");
+var premisesDescriptor = grpc.load(__dirname + '/../proto/premises.proto').premises;
+var premisesClient = new premisesDescriptor.PremisesService('service.premises:1295', grpc.credentials.createInsecure());
 
 var helper = {};
 
@@ -19,9 +24,24 @@ helper.get = function(call, callback){
       return callback({message:err},null);
     }
 
-    Payment.findOne({owner:token.sub}, function(err, paymentDetails){
+    Premises.findOne({owner:token.sub}, function(err, paymentDetails){
       if(err){return callback(err, null);}
-      callback(null, {access:paymentDetails.stripe_id});
+      stripe.accounts.retrieve( paymentDetails.stripe_id, function(err, account){
+        if(err){callback({message:JSON.stringify({message:"Unable to retrieve users stripe account", code: '0016'})},null)}
+        if(account){
+          var formatted = {};
+          formatted.chargesEnabled = account.charges_enabled;
+          formatted.payoutsEnabled = account.payouts_enabled;
+          formatted.detailsSubmitted = account.details_submitted;
+          formatted.displayName = account.display_name;
+          formatted.currency = account.default_currency;
+
+          callback(null, formatted);
+        }else{
+            return callback({message:JSON.stringify({message:"User hasn't linked a stripe account", code:'0017'})},null);
+        }
+      });
+
     })
   });
 }
@@ -48,8 +68,8 @@ helper.connect = function(call, callback){
       if(body.error){
         return callback({message:body.error_description}, null);
       }
-      var newPayment = new Payment({owner: token.sub, stripe_id:body.stripe_user_id});
-      newPayment.save(function(err, result){
+      var newPremises = new Premises({owner: token.sub, stripe_id:body.stripe_user_id});
+      newPremises.save(function(err, result){
         if(err){
           return callback({message:err},null);
         }
@@ -67,39 +87,186 @@ helper.createPayment = function(call, callback){
       console.log(err)
       return callback({message:"Something went wrong"},null);
     }
-
-    var grpc = require("grpc");
-    var premisesDescriptor = grpc.load(__dirname + '/../proto/premises.proto').premises;
-    var premisesClient = new premisesDescriptor.PremisesService('service.premises:1295', grpc.credentials.createInsecure());
-
-
+    console.log('save details', call.request.storePaymentDetails);
     premisesClient.getOwner({premisesId: call.request.premises}, function(err, result){
-      if(err){return callback(err, null)}
-      Payment.findOne({owner: result.ownerId}, function(err, paymentInfo){
-        if(err){return callback(err, null)}
 
-        stripe.charges.create({
-          amount: call.request.subtotal,
-          currency: call.request.currency,
-          source: "tok_gb",
-          destination: {
-            amount: calcSubTotal(call.request.subtotal, false, true, true),
-            account: paymentInfo.stripe_id
+      if(err){return callback(err, null)}
+      Premises.findOne({owner: result.ownerId}, function(err, paymentInfo){
+        if(err){return callback(err, null)}
+        Customer.findOne({owner:token.sub}, function(err, customer){
+          if(err){
+            return callback({message:'something went wrong retrieving customer from stripe'}, null);
           }
-        }).then(function(charge){
-          console.log(charge);
-          callback(null, {});
-        }, function(err){
-          callback({message:err.message},null);
+          if(!customer){
+            var options = {};
+            if(call.request.storePaymentDetails){
+              options.source = call.request.source;
+              stripe.customers.create(options, function(err, newCust){
+                if(err){
+                  return callback({message:'something went wrong when creating a stripe customer'}, null);
+                }
+                var newCustToStore = new Customer({owner:token.sub, customer:newCust.id});
+                newCustToStore.save(function(err, storedCustomer){
+                  if(err){
+                    callback({message:'error when storing stripe customer object'}, null);
+                  }
+                  createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, newCust.id, call.request.order, callback);
+                })
+              })
+            }else{
+              createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, null, call.request.order, callback);
+            }
+
+          }else{
+            if(call.request.storePaymentDetails){
+              console.log('Adding card to user');
+              stripe.customers.update(customer.customer, {source:call.request.source}, function(err, updatedCustomer){
+                if(err){
+                  console.log(err);
+                  return callback({message:'something went wrong while storing payment method'}, null);
+                }
+                console.log(updatedCustomer.sources.data);
+                createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
+              })
+            }else{
+              createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
+            }
+          }
+        })
+      });
+    })
+  });
+}
+
+helper.capturePayment = function(call, callback){
+  console.log('got here');
+  jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
+    if(err){
+      console.log(err)
+      return callback({message:"Something went wrong"},null);
+    }
+    Payment.findOne({"order": call.request.order}, function(paymentRetrievalError, payment){
+      if(paymentRetrievalError){
+        return callback(paymentRetrievalError, null);
+      }else if(payment.captured){
+        //payment already captured
+        return callback({message: 'payment has already been captured'},null);
+      }
+      //update captured state
+      stripe.charges.capture(payment.stripe_id, function(captureError, paymentResponse){
+        if(captureError){
+          return callback(captureError, null);
+        }
+        payment.captured = true;
+        payment.save(function(paymentUpdateError, paymentUpdated){
+          if(paymentUpdateError){
+            callback(paymentUpdateError, null);
+          }
+          return callback(null, {captured: true});
         });
       });
+    });
+  });
+}
+
+helper.refundPayment = function(call, callback){
+  jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
+    if(err){
+      console.log(err)
+      return callback({message:"Something went wrong"},null);
+      Payment.findOne({"stripe_id": call.request.order}, function(paymentRetrievalError, payment){
+        if(paymentRetrievalError){
+          return callback(paymentRetrievalError, null);
+        }else if(payment.refunded){
+          //payment already captured
+          return callback({message: 'payment has already been refunded'},null);
+        }
+        //update captured state
+        stripe.refunds.create({
+            charge: payment.stripe_id,
+            refund_application_fee: true
+        }, function(refundError, paymentResponse){
+          if(refundError){
+            return callback(refundError, null);
+          }
+          return callback(null, {refunded: true});
+        });
+      });
+    }
+  });
+}
+
+function createPayment(subtotal, currency, source, premisesAccountId, customerId, order, callback){
+  var options = {
+    amount: subtotal,
+    currency: currency,
+    source: source,
+    capture: false,
+    destination: {
+      amount: calcSubTotal(subtotal, true, true, true),
+      account: premisesAccountId
+    }
+  };
+  if(customerId){
+    options.customer =  customerId;
+  }
+  console.log(options);
+  stripe.charges.create(options).then(function(charge){
+    //store the charge so we can capture it later
+    var paymentToStore = new Payment({stripe_id: charge.id, order: order, captured: false, refunded: false});
+    paymentToStore.save(function(err, saved){
+      if(err){
+        return callback({message:'Payment was created but was not saved on our side'}, null);
+      }
+      return callback(null, {});
+    })
+  }, function(err){
+    return callback({message:err.message},null);
+  });
+}
+
+helper.getStoredPaymentMethods = function(call, callback){
+  jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
+    if(err){
+      console.log(err)
+      return callback({message:"Something went wrong"},null);
+    }
+
+    Customer.findOne({owner: token.sub}, function(err, customer){
+      if(err){
+        return callback({message:"Something went wrong when finding customer"},null);
+      }
+      if(customer){
+        stripe.customers.retrieve(customer.customer, function(err, customerObj){
+          if(err){return callback({message: 'something went wrong when retrieving customer from stripe'},null);}
+          var paymentMethods = {};
+          paymentMethods.cards = [];
+          for(var i=0;i<customerObj.sources.data.length;i++){
+            var paymentMethod = customerObj.sources.data[i];
+            if(paymentMethod.object == 'card'){
+              //card has been stored
+              var cardObj = {};
+              console.log(paymentMethod);
+              cardObj.source = paymentMethod.id;
+              cardObj.exp_month = paymentMethod.exp_month.toString();
+              cardObj.exp_year = paymentMethod.exp_year.toString();
+              cardObj.last4 = paymentMethod.last4;
+              cardObj.brand = paymentMethod.brand;
+              paymentMethods.cards = cardObj;
+            }
+          }
+          callback(null, paymentMethods);
+        });
+      }else{
+        return callback({message:'Customer doesnt exist with stripe'}, null);
+      }
     })
   });
 }
 
 
 function getConnectedAccountId(accountId){
-  Payment.findOne({owner: accountId}).exec(function(err, paymentInfo){
+  Premises.findOne({owner: accountId}).exec(function(err, paymentInfo){
     if(err){
       return callback({message:JSON.stringify(err)}, null);
     }

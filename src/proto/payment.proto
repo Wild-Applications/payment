@@ -7,7 +7,10 @@ package payment;
 service PaymentService {
   rpc get (Empty) returns (GetReply){}
   rpc connect (Code) returns (GetReply){}
-  rpc createPayment (PaymentRequest) returns (Empty){}
+  rpc createPayment (PaymentRequest) returns (PaymentResponse){}
+  rpc getStoredPaymentMethods (Empty) returns (PaymentMethods){}
+  rpc capturePayment (CaptureRequest) returns (CaptureResponse){}
+  rpc refundPayment (RefundRequest) returns (RefundResponse){}
 }
 
 message Empty {
@@ -19,11 +22,51 @@ message Code {
 
 
 message GetReply{
-  string access = 1;
+  bool chargesEnabled = 1;
+  bool payoutsEnabled = 2;
+  bool detailsSubmitted = 3;
+  string displayName = 4;
+  string currency = 5;
 }
 
 message PaymentRequest {
   double subtotal = 1;
   string currency = 2;
   string premises = 3;
+  string source = 4;
+  string customer = 5;
+  string order = 6;
+  bool storePaymentDetails = 7;
+}
+
+message CaptureRequest {
+  string order = 1;
+}
+
+message CaptureResponse {
+  bool captured = 1;
+}
+
+message RefundRequest {
+  string order = 1;
+}
+
+message RefundResponse {
+  bool refunded = 1;
+}
+
+message PaymentResponse{
+  bool payment_created = 1;
+}
+
+message PaymentMethods {
+  repeated Card cards = 1;
+}
+
+message Card {
+  string source = 1;
+  string exp_month = 2;
+  string exp_year = 3;
+  string last4 = 4;
+  string brand = 5;
 }
