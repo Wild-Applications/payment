@@ -151,7 +151,6 @@ helper.capturePayment = function(call, callback){
         return callback(paymentRetrievalError, null);
       }else if(!payment){
         return callback({message:"Unable to find payment for that order"},null);
-      }
       }else if(payment.captured){
         //payment already captured
         return callback({message: 'payment has already been captured'},null);
