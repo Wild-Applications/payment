@@ -146,6 +146,7 @@ helper.capturePayment = function(call, callback){
       return callback({message:"Something went wrong"},null);
     }
     Payment.findOne({"order": call.request.order}, function(paymentRetrievalError, payment){
+      console.log(payment);
       if(paymentRetrievalError){
         return callback(paymentRetrievalError, null);
       }else if(payment.captured){
