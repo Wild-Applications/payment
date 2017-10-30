@@ -156,7 +156,6 @@ helper.capturePayment = function(call, callback){
         return callback({message: 'payment has already been captured'},null);
       }
       //update captured state
-      stripe.charges.capture("ch_1BIerO2eZvKYlo2Cf59q8fJH", function(err, charge) {
       stripe.charges.capture(payment.stripe_id, function(err, charge){
         if(err){
           return callback(err, null);
