@@ -157,10 +157,7 @@ helper.capturePayment = function(call, callback){
       }
       //update captured state
       console.log('capturing payment for strip id  ', payment.stripe_id);
-      stripe.charges.capture(payment.stripe_id, function(err, charge){
-        if(err){
-          return callback(err, null);
-        }
+      stripe.charges.capture(payment.stripe_id).then(function(charge){
         payment.captured = true;
         payment.save(function(paymentUpdateError, paymentUpdated){
           if(paymentUpdateError){
@@ -168,7 +165,10 @@ helper.capturePayment = function(call, callback){
           }
           return callback(null, {captured: true});
         });
+      }).catch(function(err){
+        return callback(err, null);
       });
+      
     });
   });
 }
