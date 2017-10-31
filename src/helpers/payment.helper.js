@@ -166,8 +166,7 @@ helper.capturePayment = function(call, callback){
           return callback(null, {captured: true});
         });
       }).catch(function(err){
-        console.log(err);
-        return callback(err.message, null);
+        return callback(message:err.message, null);
       });
 
     });
