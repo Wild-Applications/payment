@@ -201,31 +201,31 @@ helper.refundPayment = function(call, callback){
 
 function createPayment(subtotal, currency, source, premisesAccountId, customerId, order, callback){
   var options = {
-    amount: subtotal,
-    currency: currency,
-    source: source,
-    capture: false,
-    destination: {
-      amount: calcSubTotal(subtotal, true, true, true),
-      account: premisesAccountId
-    }
-  };
-  if(customerId){
-    options.customer =  customerId;
-  }
-  console.log(options);
-  stripe.charges.create(options).then(function(charge){
-    //store the charge so we can capture it later
-    var paymentToStore = new Payment({stripe_id: charge.id, order: order, captured: false, refunded: false});
-    paymentToStore.save(function(err, saved){
-      if(err){
-        return callback({message:'Payment was created but was not saved on our side'}, null);
+      amount: subtotal,
+      currency: currency,
+      source: source,
+      capture: false,
+      destination: {
+        amount: calcSubTotal(subtotal, true, true, true),
+        account: premisesAccountId
       }
-      return callback(null, {});
-    })
-  }, function(err){
-    return callback({message:err.message},null);
-  });
+    };
+    if(customerId){
+      options.customer =  customerId;
+    }
+    console.log(options);
+    stripe.charges.create(options).then(function(charge){
+      //store the charge so we can capture it later
+      var paymentToStore = new Payment({stripe_id: charge.id, order: order, captured: false, refunded: false});
+      paymentToStore.save(function(err, saved){
+        if(err){
+          return callback({message:'Payment was created but was not saved on our side'}, null);
+        }
+        return callback(null, {});
+      })
+    }, function(err){
+      return callback({message:err.message},null);
+    });
 }
 
 
