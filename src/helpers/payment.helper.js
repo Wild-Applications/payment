@@ -242,6 +242,7 @@ helper.createSubscriptionCharge = function(call, callback){
         return callback({message: "subscription wasnt processed"}, null);
       }
       //return necessary payment info
+      console.log(payment);
       return callback(null, {})
     })
   });
