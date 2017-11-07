@@ -11,6 +11,7 @@ service PaymentService {
   rpc getStoredPaymentMethods (Empty) returns (PaymentMethods){}
   rpc capturePayment (CaptureRequest) returns (CaptureResponse){}
   rpc refundPayment (RefundRequest) returns (RefundResponse){}
+  rpc createSubscriptionCharge (SubscriptionRequest) returns (SubscriptionResponse){}
 }
 
 message Empty {
@@ -69,4 +70,13 @@ message Card {
   string exp_year = 3;
   string last4 = 4;
   string brand = 5;
+}
+
+message SubscriptionRequest{
+  int32 fee = 1;
+  int32 _id = 2;
+}
+
+message SubscriptionResponse{
+
 }

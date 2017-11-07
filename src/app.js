@@ -56,6 +56,9 @@ server.addService(proto.payment.PaymentService.service, {
   },
   refundPayment: function(call, callback){
     paymentHelper.refundPayment(call, callback);
+  },
+  createSubscriptionCharge: function(call, callback){
+    paymentHelper.createSubscriptionCharge(call, callback);
   }
 });
 

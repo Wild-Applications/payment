@@ -80,7 +80,6 @@ helper.connect = function(call, callback){
   });
 }
 
-
 helper.createPayment = function(call, callback){
   jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
     if(err){
@@ -226,6 +225,25 @@ function createPayment(subtotal, currency, source, premisesAccountId, customerId
     })
   }, function(err){
     return callback({message:err.message},null);
+  });
+}
+
+
+helper.createSubscriptionCharge = function(call, callback){
+  Premises.findOne({owner: call.request._id}, function(err, paymentInfo){
+    if(err){return callback(err, null)}
+    var options = {
+      amount: call.request.fee,
+      currency: currency,
+      source: paymentInfo.stripe_id
+    };
+    stripe.charges.create(options, function(err, payment){
+      if(err){
+        return callback({message: "subscription wasnt processed"}, null);
+      }
+      //return necessary payment info
+      return callback(null, {})
+    })
   });
 }
 
