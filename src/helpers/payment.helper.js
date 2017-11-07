@@ -239,6 +239,7 @@ helper.createSubscriptionCharge = function(call, callback){
     };
     stripe.charges.create(options, function(err, payment){
       if(err){
+        console.log(err);
         return callback({message: "subscription wasnt processed"}, null);
       }
       //return necessary payment info
