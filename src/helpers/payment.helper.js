@@ -234,7 +234,7 @@ helper.createSubscriptionCharge = function(call, callback){
     if(err){return callback(err, null)}
     var options = {
       amount: call.request.fee,
-      currency: currency,
+      currency: 'gbp',
       source: paymentInfo.stripe_id
     };
     stripe.charges.create(options, function(err, payment){
