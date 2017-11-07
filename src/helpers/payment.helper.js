@@ -38,7 +38,7 @@ helper.get = function(call, callback){
 
           callback(null, formatted);
         }else{
-            return callback({message:JSON.stringify({message:"User hasn't linked a stripe account", code:'0017'})},null);
+            return callback(null,null);
         }
       });
 
