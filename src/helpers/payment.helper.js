@@ -230,6 +230,13 @@ function createPayment(subtotal, currency, source, premisesAccountId, customerId
 
 
 helper.createSubscriptionCharge = function(call, callback){
+  stripe.accounts.list(
+    { limit: 5 },
+    function(err, accounts) {
+      consoole.log(err);
+      console.log(accounts);
+    }
+  );
   Premises.findOne({owner: call.request._id}, function(err, paymentInfo){
     if(err){return callback(err, null)}
     var options = {
