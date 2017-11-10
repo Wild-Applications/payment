@@ -165,7 +165,7 @@ helper.capturePayment = function(call, callback){
           return callback(null, {captured: true});
         });
       }).catch(function(err){
-        console.log(err.message);
+        console.log(err);
         return callback({message:err.message}, null);
       });
 
@@ -225,7 +225,6 @@ function createPayment(subtotal, currency, source, premisesAccountId, customerId
         return callback(null, {});
       })
     }, function(err){
-      console.log(err);
       return callback({message:err.message},null);
     });
 }
