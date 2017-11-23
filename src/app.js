@@ -8,7 +8,7 @@ const server = new grpc.Server();
 const mongoose = require('mongoose');
 const dbUrl = "mongodb://" + process.env.DB_USER + ":" + process.env.DB_PASS + "@" + process.env.DB_HOST;
 mongoose.connect(dbUrl);
-
+//git
 // CONNECTION EVENTS
 // When successfully connected
 mongoose.connection.on('connected', function () {
