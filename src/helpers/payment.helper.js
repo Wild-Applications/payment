@@ -284,6 +284,7 @@ helper.getStoredPaymentMethods = function(call, callback){
               cardObj.exp_year = paymentMethod.exp_year.toString();
               cardObj.last4 = paymentMethod.last4;
               cardObj.brand = paymentMethod.brand;
+              cardObj.fingerprint = paymentMethod.fingerprint;
               paymentMethods.cards[paymentMethods.cards.length] = cardObj;
             }
           }

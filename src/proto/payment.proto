@@ -70,6 +70,7 @@ message Card {
   string exp_year = 3;
   string last4 = 4;
   string brand = 5;
+  string fingerprint = 6;
 }
 
 message SubscriptionRequest{
