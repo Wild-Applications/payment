@@ -68,6 +68,21 @@ spec:
             secretKeyRef:
               name: stripe-secret
               key: secret
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db
+              key: db-user
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: db
+              key: db-pass
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: db
+              key: db-host
 ---
 apiVersion: v1
 kind: Service

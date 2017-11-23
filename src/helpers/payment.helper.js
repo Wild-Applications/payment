@@ -138,7 +138,6 @@ helper.createPayment = function(call, callback){
 }
 
 helper.capturePayment = function(call, callback){
-  console.log('got here');
   jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
     if(err){
       console.log(err)
@@ -188,7 +187,7 @@ helper.refundPayment = function(call, callback){
         //update captured state
         stripe.refunds.create({
             charge: payment.stripe_id,
-            refund_application_fee: true
+            refund_application_fee: false
         }, function(refundError, paymentResponse){
           if(refundError){
             return callback(refundError, null);
