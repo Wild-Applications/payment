@@ -265,11 +265,12 @@ helper.getStoredPaymentMethods = function(call, callback){
 
     Customer.findOne({owner: token.sub}, function(err, customer){
       if(err){
+        console.log(err);
         return callback({message:"Something went wrong when finding customer"},null);
       }
       if(customer){
         stripe.customers.retrieve(customer.customer, function(err, customerObj){
-          if(err){return callback({message: 'something went wrong when retrieving customer from stripe'},null);}
+          if(err){console.log(err);return callback({message: 'something went wrong when retrieving customer from stripe'},null);}
           var paymentMethods = {};
           paymentMethods.cards = [];
           for(var i=0;i<customerObj.sources.data.length;i++){
