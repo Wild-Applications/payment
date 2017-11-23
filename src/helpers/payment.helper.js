@@ -119,7 +119,7 @@ helper.createPayment = function(call, callback){
           }else{
             if(call.request.storePaymentDetails){
               console.log('Adding card to user');
-              stripe.customers.update(customer.customer, {source:call.request.source}, function(err, updatedCustomer){
+              stripe.customers.createSource(customer.customer, {source:call.request.source}, function(err, updatedCustomer){
                 if(err){
                   console.log(err);
                   return callback({message:'something went wrong while storing payment method'}, null);
