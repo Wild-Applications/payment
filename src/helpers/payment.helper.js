@@ -171,7 +171,7 @@ helper.capturePayment = function(call, callback){
             //payment has been refunded;
             console.log('refunded');
             payment.refunded = true;
-            payment.save((err) => {
+            payment.save(function(err){
               if(err){
                 return callback({message:errors['0004'], name:'09000004'},null);
               }
