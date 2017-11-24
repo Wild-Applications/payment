@@ -155,17 +155,15 @@ helper.capturePayment = function(call, callback){
         return callback({message: 'payment has already been captured'},null);
       }
       //update captured state
-      console.log('capturing payment for strip id  ', payment.stripe_id);
       stripe.charges.capture(payment.stripe_id).then(function(charge){
         payment.captured = true;
         payment.save(function(paymentUpdateError, paymentUpdated){
           if(paymentUpdateError){
-            callback(paymentUpdateError, null);
+            return callback(paymentUpdateError, null);
           }
           return callback(null, {captured: true});
         });
       }).catch(function(err){
-        console.log('stripe error ' , err);
         if(err.message.includes(payment.stripe_id)){
           if(err.message.includes('refunded')){
             //payment has been refunded;
