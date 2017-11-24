@@ -176,9 +176,8 @@ helper.capturePayment = function(call, callback){
                 return callback({message:errors['0004'], name:'09000004'},null);
               }
 
-              console.log('saved fine');
-              //return callback(null, {captured: false});
-              callback({message:'fuck knows'}, null);
+              console.log(err);
+              return callback(null, {captured: false});
             });
           }
           if(err.message.includes('captured')){
