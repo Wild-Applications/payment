@@ -1,5 +1,7 @@
 {
   "0001": "Failed to connect to the database",
   "0002": "Not all parameters were supplied",
-  "0003": "Unable to save payment information"
+  "0003": "Unable to save payment information",
+  "0004": "Unable to capture payment. Please try again",
+  "0005": "Payment has been refunded"
 }

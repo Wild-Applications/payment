@@ -165,8 +165,28 @@ helper.capturePayment = function(call, callback){
           return callback(null, {captured: true});
         });
       }).catch(function(err){
-        console.log(err);
-        console.log(err.message.includes(payment.stripe_id) && err.message.includes('refunded'));
+        if(err.message.includes(payment.stripe_id)){
+          if(err.message.includes('refunded')){
+            //payment has been refunded;
+            payment.refunded = true;
+            payment.save((err) => {
+              if(err){
+                return callback({message:errors['0004'], name:'09000004'},null);
+              }
+              return callback({message:errors['0005'], name:'09000005'}, {captured: false});
+            });
+          }
+          if(err.message.includes('captured')){
+              //payment has been captured
+              payment.captured = true;
+              payment.save((err) => {
+                if(err){
+                  return callback({message:errors['0004'], name:'09000004'},null);
+                }
+                return callback(null, {captured: true});
+              });
+          }
+        }
         return callback({message:err.message}, null);
       });
 
