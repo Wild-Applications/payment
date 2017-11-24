@@ -160,7 +160,7 @@ helper.capturePayment = function(call, callback){
       }
 
       if(payment.captured){
-        return callback(null, {captured: true});
+        return callback(null, {captured: false});
       }
 
       //update captured state
@@ -181,6 +181,7 @@ helper.capturePayment = function(call, callback){
               if(saveError){
                 return callback({message:errors['0004'], name:'09000004'},null);
               }
+              console.log('here 1');
               return callback(null, {captured: false});
             });
           }
@@ -191,6 +192,7 @@ helper.capturePayment = function(call, callback){
                 if(saveError){
                   return callback({message:errors['0004'], name:'09000004'},null);
                 }
+                console.log('here 2');
                 return callback(null, {captured: true});
               });
           }
