@@ -197,7 +197,6 @@ helper.capturePayment = function(call, callback){
               });
           }
         }
-        return callback({message:err.message}, null);
       });
 
     });
