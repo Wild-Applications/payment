@@ -166,6 +166,7 @@ helper.capturePayment = function(call, callback){
         });
       }).catch(function(err){
         console.log(err);
+        console.log(err.message.includes(payment.stripe_id) && err.message.includes('refunded'));
         return callback({message:err.message}, null);
       });
 
