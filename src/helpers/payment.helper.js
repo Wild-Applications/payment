@@ -169,22 +169,19 @@ helper.capturePayment = function(call, callback){
         if(err.message.includes(payment.stripe_id)){
           if(err.message.includes('refunded')){
             //payment has been refunded;
-            console.log('refunded');
             payment.refunded = true;
-            payment.save(function(err){
-              if(err){
+            payment.save(function(saveError){
+              if(saveError){
                 return callback({message:errors['0004'], name:'09000004'},null);
               }
-
-              console.log(err);
               return callback(null, {captured: false});
             });
           }
           if(err.message.includes('captured')){
               //payment has been captured
               payment.captured = true;
-              payment.save((err) => {
-                if(err){
+              payment.save((saveError) => {
+                if(saveError){
                   return callback({message:errors['0004'], name:'09000004'},null);
                 }
                 return callback(null, {captured: true});
