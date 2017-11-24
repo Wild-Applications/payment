@@ -154,6 +154,15 @@ helper.capturePayment = function(call, callback){
         //payment already captured
         return callback({message: 'payment has already been captured'},null);
       }
+      if(payment.refunded){
+        //payment has been refunded
+        return callback(null, {captured: false});
+      }
+
+      if(payment.captured){
+        return callback(null, {captured: true});
+      }
+
       //update captured state
       stripe.charges.capture(payment.stripe_id).then(function(charge){
         payment.captured = true;
@@ -198,7 +207,7 @@ helper.refundPayment = function(call, callback){
     if(err){
       console.log(err)
       return callback({message:"Something went wrong"},null);
-      Payment.findOne({"stripe_id": call.request.order}, function(paymentRetrievalError, payment){
+      Payment.findOne({"order": call.request.order}, function(paymentRetrievalError, payment){
         if(paymentRetrievalError){
           return callback(paymentRetrievalError, null);
         }else if(payment.refunded){
