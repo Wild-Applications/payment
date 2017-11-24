@@ -173,7 +173,7 @@ helper.capturePayment = function(call, callback){
               if(err){
                 return callback({message:errors['0004'], name:'09000004'},null);
               }
-              return callback({message:errors['0005'], name:'09000005'}, {captured: false});
+              return callback(null, {captured: false});
             });
           }
           if(err.message.includes('captured')){
