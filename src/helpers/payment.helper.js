@@ -308,7 +308,7 @@ helper.wasRefunded = function(call, callback){
       result.refunded = true;
       result.save((err) => {
         if(err){
-          return callback({message:[errors['0003'], name: '09000003'}, null);
+          return callback({message:errors['0003'], name: '09000003'}, null);
         }else{
           return callback(null, {order_id:result.order});
         }
