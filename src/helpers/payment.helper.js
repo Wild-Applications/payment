@@ -4,7 +4,8 @@ var jwt = require('jsonwebtoken'),
 Premises = require('../models/premises.schema.js'),
 Customer = require('../models/customer.schema.js'),
 Payment = require('../models/payment.schema.js'),
-request = require('request');
+request = require('request'),
+errors = require('../errors/errors.json');
 
 
 const secretKey = process.env.STRIPE_SECRET;
@@ -297,6 +298,26 @@ helper.getStoredPaymentMethods = function(call, callback){
   });
 }
 
+
+helper.wasRefunded = function(call, callback){
+  if(call.request.charge_id){
+    Payment.findOne({stripe_id: call.request.charge_id}, (error, result) => {
+      if(error){
+        return callback({message:errors['0001'], name:'09000001'}, null);
+      }
+      result.refunded = true;
+      result.save((err) => {
+        if(err){
+          return callback({message:[errors['0003'], name: '09000003'}, null);
+        }else{
+          return callback(null, {order_id:result.order});
+        }
+      });
+    });
+  }else{
+    return callback({message:errors['0002'], name:'09000002'}, null);
+  }
+}
 
 function getConnectedAccountId(accountId){
   Premises.findOne({owner: accountId}).exec(function(err, paymentInfo){

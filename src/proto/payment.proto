@@ -12,6 +12,7 @@ service PaymentService {
   rpc capturePayment (CaptureRequest) returns (CaptureResponse){}
   rpc refundPayment (RefundRequest) returns (RefundResponse){}
   rpc createSubscriptionCharge (SubscriptionRequest) returns (SubscriptionResponse){}
+  rpc wasRefunded (ForcedRefund) returns (ForcedRefundResponse){}
 }
 
 message Empty {
@@ -80,4 +81,12 @@ message SubscriptionRequest{
 
 message SubscriptionResponse{
 
+}
+
+message ForcedRefund {
+  string charge_id = 1;
+}
+
+message ForcedRefundResponse {
+  string order_id = 1;
 }
