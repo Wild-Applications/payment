@@ -165,14 +165,18 @@ helper.capturePayment = function(call, callback){
           return callback(null, {captured: true});
         });
       }).catch(function(err){
+        console.log('stripe error ' , err);
         if(err.message.includes(payment.stripe_id)){
           if(err.message.includes('refunded')){
             //payment has been refunded;
+            console.log('refunded');
             payment.refunded = true;
             payment.save((err) => {
               if(err){
                 return callback({message:errors['0004'], name:'09000004'},null);
               }
+
+              console.log('saved fine');
               //return callback(null, {captured: false});
               return callback({message:'fuck knows'}, null);
             });
