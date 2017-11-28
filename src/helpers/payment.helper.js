@@ -138,7 +138,7 @@ helper.createPayment = function(call, callback){
                         return createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
                       }
                       //now we have the token finger print we need to check it against all the other stored fingerprints
-                      for(var i = 0; i<customerObject.sources.data.length; i++){
+                      for(var i = 0; i<customerObj.sources.data.length; i++){
                         if(customerObj.sources.data[i].fingerprint == token.card.fingerprint){
                           canStore = false;
                           break;
@@ -154,6 +154,7 @@ helper.createPayment = function(call, callback){
                           createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
                         })
                       }else{
+                        console.log('card already existed');
                         // card already exists, create payment and dont stored
                         return   createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
                       }
