@@ -119,18 +119,51 @@ helper.createPayment = function(call, callback){
 
           }else{
             if(call.request.storePaymentDetails){
-              console.log(call.request.source);
-              stripe.customers.createSource(customer.customer, {source:call.request.source}, function(err, updatedCustomer){
+
+              stripe.customers.retrieve(customer.customer, function(err, customerObj){
                 if(err){
-                  console.log(err);
-                  return callback({message:'something went wrong while storing payment method'}, null);
+                  //something went wrong retrieving customeres existing payment paymentMethods
+                  //ignore and carry on creating payment anyway.
+                  return createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
                 }
-                console.log(updatedCustomer.sources.data);
-                createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
-              })
+                var canStore = true;
+                if(customerObj.sources.data.length != 0){
+                  //we need to retrieve the finger print of the token passed
+                  stripe.tokens.retrieve(
+                    call.request.source,
+                    function(err, token) {
+                      if(err){
+                        //unable to store payment but rather than killing the whole transaction just send the payment info off.
+                        //customers will have to add the card again later.
+                        return createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
+                      }
+                      //now we have the token finger print we need to check it against all the other stored fingerprints
+                      for(var i = 0; i<customerObject.sources.data.length; i++){
+                        if(customerObj.sources.data[i].fingerprint == token.card.fingerprint){
+                          canStore = false;
+                          break;
+                        }
+                      }
+
+                      if(canStore){
+                        //card doesnt exist, so store it first then create the payment
+                        stripe.customers.createSource(customer.customer, {source:call.request.source}, function(err, updatedCustomer){
+                          if(err){
+                            //same justification as above
+                          }
+                          createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
+                        })
+                      }else{
+                        // card already exists, create payment and dont stored
+                        return   createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
+                      }
+                    }
+                  );
+                }
+              });
             }else{
               createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
-            }
+            }////end of store payment details
           }
         })
       });
