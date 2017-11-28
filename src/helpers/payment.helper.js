@@ -147,7 +147,6 @@ helper.capturePayment = function(call, callback){
     Payment.findOne({"order": call.request.order}, function(paymentRetrievalError, payment){
       console.log(payment);
       if(paymentRetrievalError){
-        return callback(paymentRetrievalError, null);
         var metadata = new grpc.Metadata();
         metadata.add('error_code', '09000007');
         return callback({message:errors['0007'].message, code: errors['0007'].code, metadata: metadata},null);
@@ -211,10 +210,16 @@ helper.refundPayment = function(call, callback){
       return callback({message:"Something went wrong"},null);
       Payment.findOne({"order": call.request.order}, function(paymentRetrievalError, payment){
         if(paymentRetrievalError){
-          return callback(paymentRetrievalError, null);
+          var metadata = new grpc.Metadata();
+          metadata.add('error_code', '09010007');
+          return callback({message:errors['0007'].message, code: errors['0007'].code, metadata: metadata},null);
+        }else if(!payment){
+          var metadata = new grpc.Metadata();
+          metadata.add('error_code', '09010006');
+          return callback({message:errors['0006'].message, code: errors['0006'].code, metadata: metadata},null);
         }else if(payment.refunded){
           //payment already captured
-          return callback({message: 'payment has already been refunded'},null);
+          return callback(null,{refunded: true});
         }
         //update captured state
         stripe.refunds.create({
@@ -222,7 +227,9 @@ helper.refundPayment = function(call, callback){
             refund_application_fee: false
         }, function(refundError, paymentResponse){
           if(refundError){
-            return callback(refundError, null);
+            var metadata = new grpc.Metadata();
+            metadata.add('error_code', '09000008');
+            return callback({message:errors['0008'].message, code: errors['0008'].code, metadata: metadata},null);
           }
           return callback(null, {refunded: true});
         });
