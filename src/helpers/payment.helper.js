@@ -148,20 +148,21 @@ helper.capturePayment = function(call, callback){
       console.log(payment);
       if(paymentRetrievalError){
         return callback(paymentRetrievalError, null);
+        var metadata = new grpc.Metadata();
+        metadata.add('error_code', '09000007');
+        return callback({message:errors['0007'].message, code: errors['0007'].code, metadata: metadata},null);
       }else if(!payment){
-        return callback({message:"Unable to find payment for that order"},null);
+        var metadata = new grpc.Metadata();
+        metadata.add('error_code', '09000006');
+        return callback({message:errors['0006'].message, code: errors['0006'].code, metadata: metadata},null);
       }else if(payment.captured){
         //payment already captured
         return callback(null, {captured: true});
-      }
-      if(payment.refunded){
+      }else if(payment.refunded){
         //payment has been refunded
         return callback(null, {captured: false});
       }
 
-      if(payment.captured){
-        return callback(null, {captured: false});
-      }
 
       //update captured state
       stripe.charges.capture(payment.stripe_id).then(function(charge){
@@ -190,7 +191,7 @@ helper.capturePayment = function(call, callback){
               payment.captured = true;
               payment.save((saveError) => {
                 if(saveError){
-                  return callback({message:errors['0004'], name:'09000004'},null);
+                  return callback({message:errors['0004'], name:'09010004'},null);
                 }
                 console.log('here 2');
                 return callback(null, {captured: true});

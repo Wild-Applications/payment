@@ -3,5 +3,7 @@
   "0002": "Not all parameters were supplied",
   "0003": "Unable to save payment information",
   "0004": "Unable to capture payment. Please try again",
-  "0005": "Payment has been refunded"
+  "0005": "Payment has been refunded",
+  "0006": {"message": "No payment exists for the specified order", "code":400},
+  "0007": {"message": "Unable to retrieve payment", "code": 500}
 }
