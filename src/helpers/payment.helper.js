@@ -146,6 +146,7 @@ helper.createPayment = function(call, callback){
                       }
 
                       if(canStore){
+                        console.log('card didnt exist');
                         //card doesnt exist, so store it first then create the payment
                         stripe.customers.createSource(customer.customer, {source:call.request.source}, function(err, updatedCustomer){
                           if(err){
