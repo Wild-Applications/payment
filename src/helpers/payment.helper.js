@@ -208,33 +208,34 @@ helper.refundPayment = function(call, callback){
     if(err){
       console.log(err)
       return callback({message:"Something went wrong"},null);
-      Payment.findOne({"order": call.request.order}, function(paymentRetrievalError, payment){
-        if(paymentRetrievalError){
-          var metadata = new grpc.Metadata();
-          metadata.add('error_code', '09010007');
-          return callback({message:errors['0007'].message, code: errors['0007'].code, metadata: metadata},null);
-        }else if(!payment){
-          var metadata = new grpc.Metadata();
-          metadata.add('error_code', '09010006');
-          return callback({message:errors['0006'].message, code: errors['0006'].code, metadata: metadata},null);
-        }else if(payment.refunded){
-          //payment already captured
-          return callback(null,{refunded: true});
-        }
-        //update captured state
-        stripe.refunds.create({
-            charge: payment.stripe_id,
-            refund_application_fee: false
-        }, function(refundError, paymentResponse){
-          if(refundError){
-            var metadata = new grpc.Metadata();
-            metadata.add('error_code', '09000008');
-            return callback({message:errors['0008'].message, code: errors['0008'].code, metadata: metadata},null);
-          }
-          return callback(null, {refunded: true});
-        });
-      });
     }
+
+    Payment.findOne({"order": call.request.order}, function(paymentRetrievalError, payment){
+      if(paymentRetrievalError){
+        var metadata = new grpc.Metadata();
+        metadata.add('error_code', '09010007');
+        return callback({message:errors['0007'].message, code: errors['0007'].code, metadata: metadata},null);
+      }else if(!payment){
+        var metadata = new grpc.Metadata();
+        metadata.add('error_code', '09010006');
+        return callback({message:errors['0006'].message, code: errors['0006'].code, metadata: metadata},null);
+      }else if(payment.refunded){
+        //payment already captured
+        return callback(null,{refunded: true});
+      }
+      //update captured state
+      stripe.refunds.create({
+          charge: payment.stripe_id,
+          refund_application_fee: false
+      }, function(refundError, paymentResponse){
+        if(refundError){
+          var metadata = new grpc.Metadata();
+          metadata.add('error_code', '09000008');
+          return callback({message:errors['0008'].message, code: errors['0008'].code, metadata: metadata},null);
+        }
+        return callback(null, {refunded: true});
+      });
+    });
   });
 }
 
