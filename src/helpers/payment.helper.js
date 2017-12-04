@@ -22,13 +22,15 @@ var helper = {};
 helper.get = function(call, callback){
   jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
     if(err){
-      return callback({message:err},null);
+      return callback(errors['0009'],null);
     }
 
     Premises.findOne({owner:token.sub}, function(err, paymentDetails){
-      if(err){return callback(err, null);}
+      if(err){return callback(errors['0007'], null);}
       stripe.accounts.retrieve( paymentDetails.stripe_id, function(err, account){
-        if(err){callback({message:JSON.stringify({message:"Unable to retrieve users stripe account", code: '0016'})},null)}
+        if(err){
+          return callback(errors['0007'],null)
+        }
         if(account){
           var formatted = {};
           formatted.chargesEnabled = account.charges_enabled;
@@ -51,7 +53,7 @@ helper.get = function(call, callback){
 helper.connect = function(call, callback){
   jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
     if(err){
-      return callback({message:err},null);
+      return callback(errors['0009'],null);
     }
 
     request.post({
@@ -63,16 +65,20 @@ helper.connect = function(call, callback){
         client_secret: secretKey
       }
     }, function(err, r, body){
-      if(err){return callback(err, null)}
+      if(err){
+        return callback(errors['0010'], null)
+      }
 
       body = JSON.parse(body);
       if(body.error){
-        return callback({message:body.error_description}, null);
+        var error = errors['0010'];
+        error.message = body.error_description;
+        return callback(error, null);
       }
       var newPremises = new Premises({owner: token.sub, stripe_id:body.stripe_user_id});
       newPremises.save(function(err, result){
         if(err){
-          return callback({message:err},null);
+          return callback(errors['0010'],null);
         }
         callback(null, {access: result.stripe_id});
       });
@@ -84,18 +90,15 @@ helper.connect = function(call, callback){
 helper.createPayment = function(call, callback){
   jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
     if(err){
-      console.log(err)
-      return callback({message:"Something went wrong"},null);
+      return callback(errors['0009'],null);
     }
-    console.log('save details', call.request.storePaymentDetails);
     premisesClient.getOwner({premisesId: call.request.premises}, function(err, result){
-
       if(err){return callback(err, null)}
       Premises.findOne({owner: result.ownerId}, function(err, paymentInfo){
-        if(err){return callback(err, null)}
+        if(err){return callback(errors['0011'], null)}
         Customer.findOne({owner:token.sub}, function(err, customer){
           if(err){
-            return callback({message:'something went wrong retrieving customer from stripe'}, null);
+            return callback(errors['0010'], null);
           }
           if(!customer){
             var options = {};
@@ -103,12 +106,12 @@ helper.createPayment = function(call, callback){
               options.source = call.request.source;
               stripe.customers.create(options, function(err, newCust){
                 if(err){
-                  return callback({message:'something went wrong when creating a stripe customer'}, null);
+                  return callback(errors['0010'], null);
                 }
                 var newCustToStore = new Customer({owner:token.sub, customer:newCust.id});
                 newCustToStore.save(function(err, storedCustomer){
                   if(err){
-                    callback({message:'error when storing stripe customer object'}, null);
+                    callback(errors['0010'], null);
                   }
                   createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, newCust.id, call.request.order, callback);
                 })
@@ -146,7 +149,6 @@ helper.createPayment = function(call, callback){
                       }
 
                       if(canStore){
-                        console.log('card didnt exist');
                         //card doesnt exist, so store it first then create the payment
                         stripe.customers.createSource(customer.customer, {source:call.request.source}, function(err, updatedCustomer){
                           if(err){
@@ -155,7 +157,6 @@ helper.createPayment = function(call, callback){
                           createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
                         })
                       }else{
-                        console.log('card already existed');
                         // card already exists, create payment and dont stored
                         return   createPayment(call.request.subtotal, call.request.currency, call.request.source, paymentInfo.stripe_id, customer.customer, call.request.order, callback);
                       }
@@ -176,11 +177,9 @@ helper.createPayment = function(call, callback){
 helper.capturePayment = function(call, callback){
   jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
     if(err){
-      console.log(err)
-      return callback({message:"Something went wrong"},null);
+      return callback(errors['0009'], null);
     }
     Payment.findOne({"order": call.request.order}, function(paymentRetrievalError, payment){
-      console.log(payment);
       if(paymentRetrievalError){
         var metadata = new grpc.Metadata();
         metadata.add('error_code', '09000007');
@@ -203,7 +202,7 @@ helper.capturePayment = function(call, callback){
         payment.captured = true;
         payment.save(function(paymentUpdateError, paymentUpdated){
           if(paymentUpdateError){
-            return callback(paymentUpdateError, null);
+            return callback(errors['0004'], null);
           }
           return callback(null, {captured: true});
         });
@@ -214,9 +213,8 @@ helper.capturePayment = function(call, callback){
             payment.refunded = true;
             payment.save(function(saveError){
               if(saveError){
-                return callback({message:errors['0004'], name:'09000004'},null);
+                return callback(errors['0004'],null);
               }
-              console.log('here 1');
               return callback(null, {captured: false});
             });
           }
@@ -225,9 +223,8 @@ helper.capturePayment = function(call, callback){
               payment.captured = true;
               payment.save((saveError) => {
                 if(saveError){
-                  return callback({message:errors['0004'], name:'09010004'},null);
+                  return callback(errors['0004'],null);
                 }
-                console.log('here 2');
                 return callback(null, {captured: true});
               });
           }
@@ -241,8 +238,7 @@ helper.capturePayment = function(call, callback){
 helper.refundPayment = function(call, callback){
   jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
     if(err){
-      console.log(err)
-      return callback({message:"Something went wrong"},null);
+      return callback(errors['0009'],null);
     }
 
     Payment.findOne({"order": call.request.order}, function(paymentRetrievalError, payment){
@@ -294,58 +290,29 @@ function createPayment(subtotal, currency, source, premisesAccountId, customerId
       var paymentToStore = new Payment({stripe_id: charge.id, order: order, captured: false, refunded: false});
       paymentToStore.save(function(err, saved){
         if(err){
-          return callback({message:'Payment was created but was not saved on our side'}, null);
+          return callback(errors['0011'], null);
         }
         return callback(null, {});
       })
     }, function(err){
-      return callback({message:err.message},null);
+      return callback(errors['0011'],null);
     });
 }
 
 
-helper.createSubscriptionCharge = function(call, callback){
-  stripe.accounts.list(
-    { limit: 5 },
-    function(err, accounts) {
-      consoole.log(err);
-      console.log(accounts);
-    }
-  );
-  Premises.findOne({owner: call.request._id}, function(err, paymentInfo){
-    if(err){return callback(err, null)}
-    var options = {
-      amount: call.request.fee,
-      currency: 'gbp',
-      source: paymentInfo.stripe_id
-    };
-    stripe.charges.create(options, function(err, payment){
-      if(err){
-        console.log(err);
-        return callback({message: "subscription wasnt processed"}, null);
-      }
-      //return necessary payment info
-      console.log(payment);
-      return callback(null, {})
-    })
-  });
-}
-
 helper.getStoredPaymentMethods = function(call, callback){
   jwt.verify(call.metadata.get('authorization')[0], process.env.JWT_SECRET, function(err, token){
     if(err){
-      console.log(err)
-      return callback({message:"Something went wrong"},null);
+      return callback(errors['0009'],null);
     }
 
     Customer.findOne({owner: token.sub}, function(err, customer){
       if(err){
-        console.log(err);
-        return callback({message:"Something went wrong when finding customer"},null);
+        return callback(errors['0012'],null);
       }
       if(customer){
         stripe.customers.retrieve(customer.customer, function(err, customerObj){
-          if(err){console.log(err);return callback({message: 'something went wrong when retrieving customer from stripe'},null);}
+          if(err){return callback(errors['0012'],null);}
           var paymentMethods = {};
           paymentMethods.cards = [];
           for(var i=0;i<customerObj.sources.data.length;i++){
@@ -353,7 +320,6 @@ helper.getStoredPaymentMethods = function(call, callback){
             if(paymentMethod.object == 'card'){
               //card has been stored
               var cardObj = {};
-              console.log(paymentMethod);
               cardObj.source = paymentMethod.id;
               cardObj.exp_month = paymentMethod.exp_month.toString();
               cardObj.exp_year = paymentMethod.exp_year.toString();
@@ -366,7 +332,7 @@ helper.getStoredPaymentMethods = function(call, callback){
           callback(null, paymentMethods);
         });
       }else{
-        return callback({message:'Customer doesnt exist with stripe'}, null);
+        return callback(errors['00012'], null);
       }
     })
   });
@@ -377,26 +343,26 @@ helper.wasRefunded = function(call, callback){
   if(call.request.charge_id){
     Payment.findOne({stripe_id: call.request.charge_id}, (error, result) => {
       if(error){
-        return callback({message:errors['0001'], name:'09000001'}, null);
+        return callback(errors['0001'], null);
       }
       result.refunded = true;
       result.save((err) => {
         if(err){
-          return callback({message:errors['0003'], name: '09000003'}, null);
+          return callback(errors['0003'], null);
         }else{
           return callback(null, {order_id:result.order});
         }
       });
     });
   }else{
-    return callback({message:errors['0002'], name:'09000002'}, null);
+    return callback(errors['0002'], null);
   }
 }
 
 function getConnectedAccountId(accountId){
   Premises.findOne({owner: accountId}).exec(function(err, paymentInfo){
     if(err){
-      return callback({message:JSON.stringify(err)}, null);
+      return callback(errors['0007'], null);
     }
 
     return callback(null, formatOrder(resultOrder));

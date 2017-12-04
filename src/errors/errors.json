@@ -1,10 +1,14 @@
 {
-  "0001": "Failed to connect to the database",
-  "0002": "Not all parameters were supplied",
-  "0003": "Unable to save payment information",
-  "0004": "Unable to capture payment. Please try again",
-  "0005": "Payment has been refunded",
+  "0001": {"message": "Failed to connect to the database", "code":400},
+  "0002": {"message": "Not all parameters were supplied", "code":400},
+  "0003": {"message": "Unable to save payment information", "code":400},
+  "0004": {"message": "Unable to capture payment. Please try again", "code":400},
+  "0005": {"message": "Payment has been refunded", "code":400},
   "0006": {"message": "No payment exists for the specified order", "code":400},
   "0007": {"message": "Unable to retrieve payment", "code": 500},
-  "0008": {"message": "Unable to refund order", "code": 500}
+  "0008": {"message": "Unable to refund order", "code": 500},
+  "0009": {"message": "Invalid credentials", "code": 401},
+  "0010": {"message": "Unable to connect to Stripe", "code": 500},
+  "0011": {"message": "Unable to create payment", "code": 500},
+  "0012": {"message": "Unable to retrieve stored payment methods", "code": 500}
 }
