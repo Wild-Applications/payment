@@ -92,6 +92,7 @@ helper.createPayment = function(call, callback){
     if(err){
       return callback(errors['0009'],null);
     }
+    console.log('request', call.request);
     premisesClient.getOwner({premisesId: call.request.premises}, function(err, result){
       if(err){return callback(err, null)}
       Premises.findOne({owner: result.ownerId}, function(err, paymentInfo){
