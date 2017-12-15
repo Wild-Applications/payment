@@ -296,6 +296,7 @@ function createPayment(subtotal, currency, source, premisesAccountId, customerId
         return callback(null, {});
       })
     }, function(err){
+      console.log(err);
       return callback(errors['0011'],null);
     });
 }
