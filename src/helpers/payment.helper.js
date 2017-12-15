@@ -272,7 +272,7 @@ helper.refundPayment = function(call, callback){
 }
 
 function createPayment(subtotal, currency, source, premisesAccountId, customerId, order, callback){
-  if(!isInteger(subtotal)){
+  if(!Number.isInteger(subtotal)){
     subtotal *= 100;
   }
   var options = {
