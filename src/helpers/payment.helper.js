@@ -46,7 +46,7 @@ helper.get = function(call, callback){
           }
         });
       }else{
-        return callback(null, undefined);
+        return callback(null, null);
       }
     })
   });
