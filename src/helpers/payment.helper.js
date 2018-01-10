@@ -47,7 +47,7 @@ helper.get = function(call, callback){
         });
       }else{
         console.log(paymentDetails);
-        return callback(null, null);
+        return callback(null, paymentDetails);
       }
     })
   });
