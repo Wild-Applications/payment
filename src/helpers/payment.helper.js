@@ -46,7 +46,7 @@ helper.get = function(call, callback){
           }
         });
       }else{
-        return callback(errors['0013'], null);
+        return callback(null, undefined);
       }
     })
   });
