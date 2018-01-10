@@ -27,24 +27,27 @@ helper.get = function(call, callback){
 
     Premises.findOne({owner:token.sub}, function(err, paymentDetails){
       if(err){return callback(errors['0007'], null);}
-      stripe.accounts.retrieve( paymentDetails.stripe_id, function(err, account){
-        if(err){
-          return callback(errors['0007'],null)
-        }
-        if(account){
-          var formatted = {};
-          formatted.chargesEnabled = account.charges_enabled;
-          formatted.payoutsEnabled = account.payouts_enabled;
-          formatted.detailsSubmitted = account.details_submitted;
-          formatted.displayName = account.display_name;
-          formatted.currency = account.default_currency;
+      if(paymentDetails){
+        stripe.accounts.retrieve( paymentDetails.stripe_id, function(err, account){
+          if(err){
+            return callback(errors['0007'],null)
+          }
+          if(account){
+            var formatted = {};
+            formatted.chargesEnabled = account.charges_enabled;
+            formatted.payoutsEnabled = account.payouts_enabled;
+            formatted.detailsSubmitted = account.details_submitted;
+            formatted.displayName = account.display_name;
+            formatted.currency = account.default_currency;
 
-          callback(null, formatted);
-        }else{
-            return callback(null,null);
-        }
-      });
-
+            callback(null, formatted);
+          }else{
+              return callback(null,null);
+          }
+        });
+      }else{
+        return callback(error['0013'], null);
+      }
     })
   });
 }
