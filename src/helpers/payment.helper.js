@@ -42,11 +42,11 @@ helper.get = function(call, callback){
 
             callback(null, formatted);
           }else{
-              return callback(null,undefined);
+              return callback(errors['0013'],null);
           }
         });
       }else{
-        return callback(null, errors['0013']);
+        return callback(errors['0013'],null);
       }
     })
   });
