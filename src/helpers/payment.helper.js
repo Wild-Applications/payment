@@ -42,7 +42,7 @@ helper.get = function(call, callback){
 
             callback(null, formatted);
           }else{
-              return callback(null,null);
+              return callback(null,undefined);
           }
         });
       }else{
