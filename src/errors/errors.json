@@ -11,5 +11,5 @@
   "0010": {"message": "Unable to connect to Stripe", "code": 500},
   "0011": {"message": "Unable to create payment", "code": 500},
   "0012": {"message": "Unable to retrieve stored payment methods", "code": 500},
-  "0013": {"message": "No such premises exists", "code": 404}
+  "0013": {"message": "Stripe account not linked for this user", "code": 404}
 }
